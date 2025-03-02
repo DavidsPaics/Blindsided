@@ -3,19 +3,20 @@ from utilities import *
 import globals
 from player import Player
 
-tileNames = {
-    ".": "floor",
-    "#": "wall-s",
-}
-
-tileLayers = {
-    ".": 0,
-    "#": 1
-}
 
 class World:
     def __init__(self):
         self.currentMap = []
+        
+        self.tileNames = {
+            ".": "floor",
+            "#": "wall-s",
+        }
+
+        self.tileLayers = {
+            ".": 0,
+            "#": 1
+        }
         self.tile_textures = self.load_tile_textures("assets/tiles")
         self.player = Player()
 
@@ -47,7 +48,7 @@ class World:
             self.currentMap.append(list(rleDecode(line)))
     
     def update(self, dt): 
-        self.player.update(dt, self.currentMap, tileLayers)
+        self.player.update(dt, self.currentMap, self.tileLayers)
 
     def draw(self, surface, cameraPos):
         if not self.currentMap:
@@ -58,6 +59,9 @@ class World:
 
         for row_idx, row in enumerate(self.currentMap):
             for col_idx, tile in enumerate(row):
+                if self.tileLayers[tile] == 1:
+                    continue
+
                 screen_x = (col_idx * scaled_size) - cam_x
                 screen_y = (row_idx * scaled_size) - cam_y
 
@@ -66,7 +70,7 @@ class World:
                     0 <= screen_x < surface.get_width() and
                     0 <= screen_y < surface.get_height()
                 ):
-                    texture = self.tile_textures.get(tileNames.get(tile, None), None)
+                    texture = self.tile_textures.get(self.tileNames.get(tile, None), None)
                     if texture:
                         surface.blit(texture, (screen_x, screen_y))
                     else:

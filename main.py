@@ -44,7 +44,9 @@ while running:
     world.update(dt)
     world.draw(screen, cameraPos)
 
-    globals.lightMap.draw(screen)
+    # Update and draw light
+    if not globals.debugMode:
+        globals.lightMap.draw(screen)
 
     if globals.debugMode:
         drawFPSCounter(screen, clock)

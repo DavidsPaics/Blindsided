@@ -36,35 +36,27 @@ class Player:
         if abs(self.vely) < 0.001:
             self.vely = 0
 
+        centerPos = (self.x + (globals.tile_size*globals.scaling)/2, self.y + (globals.tile_size*globals.scaling)/2)
+
+        if pressedKeys[pygame.K_f]:
+            globals.lightMap.draw_light(centerPos, currentMap, layers, radius=700, light_strength=0)
+        else:
+            globals.lightMap.draw_light(centerPos, currentMap, layers, radius=500, light_strength=50)
+        
+
+        self.x += self.velx * dt
+        self.y += self.vely * dt
+
         #tile size and player size globals.tile_size*globals.scaling
         # check if tile should collide layers[currentMap[tilex][tiley]] == 1
 
-        # Calculate the player's corner positions
-        corners = [
-            (self.velx + self.x, self.vely + self.y),
-            (self.velx + self.x + globals.tile_size * globals.scaling, self.vely + self.y),
-            (self.velx + self.x, self.vely + self.y + globals.tile_size * globals.scaling),
-            (self.velx + self.x + globals.tile_size * globals.scaling, self.vely + self.y + globals.tile_size * globals.scaling)
-        ]
-
-        # Check for collisions with the map boundaries and solid tiles
-        for corner in corners:
-            tile_x = int(corner[0] // (globals.tile_size * globals.scaling))
-            tile_y = int(corner[1] // (globals.tile_size * globals.scaling))
-
-            if tile_x < 0 or tile_x >= len(currentMap[0]) or tile_y < 0 or tile_y >= len(currentMap):
-                self.velx = 0
-                self.vely = 0
-                break
-
-            if layers[currentMap[tile_y][tile_x]] == 1:
-                self.velx = 0
-                self.vely = 0
-                break
-
-        # Update position based on velocity
-        self.x += self.velx * dt
-        self.y += self.vely * dt
+        # Calculate the player's corner positions for x direction
+        # corners_x = [
+        #     (self.x + self.velx, self.y),
+        #     (self.x + self.velx + globals.tile_size * globals.scaling, self.y),
+        #     (self.x + self.velx, self.y + globals.tile_size * globals.scaling),
+        #     (self.x + self.velx + globals.tile_size * globals.scaling, self.y + globals.tile_size * globals.scaling)
+        # ]
 
 
     def draw(self, surface, cameraPos):
@@ -72,18 +64,18 @@ class Player:
         screen_y = self.y - cameraPos[1]
 
         surface.blit(self.texture, (screen_x, screen_y))
-        for radius in range(95, 45, -1):  # Decreasing radius
-            alpha = int(mapValue(radius, 45, 95, 0, 245))  # Map radius correctly to alpha
-            color = (0, 0, 0, alpha)  # RGBA color with mapped alpha
+        # for radius in range(95, 45, -1):  # Decreasing radius
+        #     alpha = int(mapValue(radius, 45, 95, 0, 245))  # Map radius correctly to alpha
+        #     color = (0, 0, 0, alpha)  # RGBA color with mapped alpha
 
-            pygame.draw.circle(
-                globals.lightMap.surface,
-                color,
-                (screen_x + self.texture.get_width() // 2, screen_y + self.texture.get_height() // 2),
-                radius
-            )
+        #     pygame.draw.circle(
+        #         globals.lightMap.surface,
+        #         color,
+        #         (screen_x + self.texture.get_width() // 2, screen_y + self.texture.get_height() // 2),
+        #         radius
+        #     )
 
-            self.drawFlashlight((screen_x, screen_y), 45, 400, 600, 10)
+        #     self.drawFlashlight((screen_x, screen_y), 45, 400, 600, 10)
 
 
     def drawFlashlight(self, pos, angle, startLength, endLength, steps):
