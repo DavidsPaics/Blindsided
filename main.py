@@ -7,6 +7,8 @@ pygame.init()
 
 # Set up the display
 screen = pygame.display.set_mode((0 , 0))
+globals.screenWidth = screen.get_width()
+globals.screenHeight = screen.get_height()
 pygame.display.set_caption("Blindsided")
 
 logging.basicConfig(level=logging.INFO, 
@@ -19,7 +21,6 @@ logging.info('Starting game...')
 
 world = World() 
 world.loadMap("./map.txt")
-cameraPos = (0,0)
 
 globals.lightMap = LightMap((screen.get_width(), screen.get_height()))
 
@@ -42,7 +43,8 @@ while running:
     screen.fill((0, 0, 0))
 
     world.update(dt)
-    world.draw(screen, cameraPos)
+    world.draw(screen)
+
 
     # Update and draw light
     if not globals.debugMode:

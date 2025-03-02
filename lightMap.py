@@ -9,15 +9,19 @@ class LightMap:
     def __init__(self, size):
         """
         Initializes the LightMap.
-        :param size: (width, height) of the surface
-        :param light_strength: Controls how bright the light is (0-255)
+        :param size: (width, height) of the full-resolution surface
+        :param downscale_factor: How much to downscale rendering (higher = better performance, lower quality)
         """
-        self.surface = pygame.Surface(size, pygame.SRCALPHA)
+        self.full_size = size
+        self.downscale_factor = globals.lightMapDownscale
+        self.low_res_size = (size[0] // self.downscale_factor, size[1] // self.downscale_factor)
+        self.surface = pygame.Surface(self.low_res_size, pygame.SRCALPHA)
+        self.temp_surface = pygame.Surface(self.low_res_size, pygame.SRCALPHA)
 
     def clear(self):
         """ Clears the light map with a semi-transparent dark overlay. """
-        self.surface.fill((0, 0, 0, 255)) 
-        
+        self.surface.fill((0, 0, 0, 255))
+
     def cast_light(self, light_pos, game_map, layers, radius=200, num_rays=100):
         """
         Casts light rays dynamically and stops at walls.
@@ -32,6 +36,10 @@ class LightMap:
         map_width = len(game_map[0])  # Number of columns
         map_height = len(game_map)    # Number of rows
 
+        # Adjust light position for low resolution
+        light_pos = (light_pos[0] // self.downscale_factor, light_pos[1] // self.downscale_factor)
+        scaled_radius = radius // self.downscale_factor
+
         for angle in range(0, 360, 360 // num_rays):
             rad = math.radians(angle)
             dx, dy = math.cos(rad), math.sin(rad)
@@ -39,10 +47,11 @@ class LightMap:
 
             counter = 0
 
-            for _ in range(radius):  # Step forward along the ray
-                x += dx
-                y += dy
-                tile_x, tile_y = int(x // (globals.tile_size*globals.scaling)), int(y // (globals.tile_size*globals.scaling))
+            for _ in range(scaled_radius // globals.lightRayStepSize):
+                x += dx * globals.lightRayStepSize
+                y += dy * globals.lightRayStepSize
+                tile_x, tile_y = int(x // (globals.tile_size * globals.scaling // self.downscale_factor)), \
+                                 int(y // (globals.tile_size * globals.scaling // self.downscale_factor))
 
                 # Check if we are out of bounds
                 if 0 <= tile_x < map_width and 0 <= tile_y < map_height:
@@ -57,49 +66,41 @@ class LightMap:
             rays.append((x, y))
         return rays
 
-
     def draw_light(self, light_pos, game_map, layers, radius=200, light_strength=100):
         """
-        Draws the light effect onto the light surface.
+        Draws the light effect onto the low-resolution surface.
         :param light_pos: (x, y) position of the light source
         :param game_map: 2D list representing the game world
         :param layers: Dictionary mapping characters to properties
-        :param tile_size: Size of each tile
         :param radius: Maximum light distance
         """
-        self.clear()  # Clear the surface before drawing new lights
+        self.temp_surface.fill((0,0,0))
         light_points = self.cast_light(light_pos, game_map, layers, radius, num_rays=globals.lightRayCount)
 
         if len(light_points) > 2:
-            # Draw the base light shape
-            pygame.draw.polygon(self.surface, (0, 0, 0, light_strength), light_points)
+            # Draw the base light shape in low resolution
+            pygame.draw.polygon(self.temp_surface, (0, 0, 0, light_strength), light_points)
 
             # Smooth fading effect using a radial gradient slightly larger than the polygon
-            larger_radius = radius + 10  # Increase the radius slightly for the gradient
-            gradient = pygame.Surface((larger_radius * 2, larger_radius * 2), pygame.SRCALPHA)
-            for i in range(larger_radius, 50, -globals.lightGradientStep):
-                alpha = int(((i - 50) / (larger_radius - 50)) * (255 - light_strength) + light_strength)
-                pygame.draw.circle(gradient, (0, 0, 0, alpha), (larger_radius, larger_radius), i)
+            scaled_radius = (radius+5) // self.downscale_factor
+            gradient = pygame.Surface((scaled_radius * 2, scaled_radius * 2), pygame.SRCALPHA)
+            for i in range(scaled_radius, 0, -globals.lightGradientStep):
+                alpha = int(((i) / (scaled_radius)) * 
+                            (255 - light_strength) + light_strength)
+                pygame.draw.circle(gradient, (0, 0, 0, alpha), (scaled_radius, scaled_radius), i)
 
             # Center the gradient at the light source
-            gradient_x = light_pos[0] - larger_radius
-            gradient_y = light_pos[1] - larger_radius
+            gradient_x = light_pos[0] // self.downscale_factor - scaled_radius
+            gradient_y = light_pos[1] // self.downscale_factor - scaled_radius
 
-            self.surface.blit(gradient, (gradient_x, gradient_y))
-            gradient = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
-            for i in range(radius, 50, -globals.lightGradientStep):
-                alpha = int(((i - 50) / (radius - 50)) * (255 - light_strength) + light_strength)
-                pygame.draw.circle(gradient, (0, 0, 0, alpha), (radius, radius), i)
-
-            # Center the gradient at the light source
-            gradient_x = light_pos[0] - radius
-            gradient_y = light_pos[1] - radius
-
-            self.surface.blit(gradient, (gradient_x, gradient_y))
+            self.temp_surface.blit(gradient, (gradient_x, gradient_y))
+            self.surface.blit(self.temp_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
 
     def draw(self, target_surface):
         """
-        Blits the light surface onto a given target surface.
+        Scales up the low-resolution light map and blits it onto the target surface.
         :param target_surface: The surface to render the light onto
         """
-        target_surface.blit(self.surface, (0, 0))
+        # Scale up with smoothing
+        high_res_surface = pygame.transform.smoothscale(self.surface, self.full_size)
+        target_surface.blit(high_res_surface, (0, 0))

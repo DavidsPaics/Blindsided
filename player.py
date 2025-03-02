@@ -36,32 +36,59 @@ class Player:
         if abs(self.vely) < 0.001:
             self.vely = 0
 
-        centerPos = (self.x + (globals.tile_size*globals.scaling)/2, self.y + (globals.tile_size*globals.scaling)/2)
-
-        if pressedKeys[pygame.K_f]:
-            globals.lightMap.draw_light(centerPos, currentMap, layers, radius=700, light_strength=0)
-        else:
-            globals.lightMap.draw_light(centerPos, currentMap, layers, radius=500, light_strength=50)
-        
-
         self.x += self.velx * dt
         self.y += self.vely * dt
 
-        #tile size and player size globals.tile_size*globals.scaling
-        # check if tile should collide layers[currentMap[tilex][tiley]] == 1
+        centerPos = (self.x + (globals.scaledTileSize)/2, self.y + (globals.scaledTileSize)/2)
 
-        # Calculate the player's corner positions for x direction
-        # corners_x = [
-        #     (self.x + self.velx, self.y),
-        #     (self.x + self.velx + globals.tile_size * globals.scaling, self.y),
-        #     (self.x + self.velx, self.y + globals.tile_size * globals.scaling),
-        #     (self.x + self.velx + globals.tile_size * globals.scaling, self.y + globals.tile_size * globals.scaling)
-        # ]
+        globals.lightMap.draw_light(centerPos, currentMap, layers, radius=500, light_strength=40)
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        light_x = mouse_x 
+        light_y = mouse_y 
+        globals.lightMap.draw_light((light_x, light_y), currentMap, layers, radius=200, light_strength=40)
+
+        self.x += self.velx * dt
+
+        if self.velx<0:
+            tile_x = int(self.x // globals.scaledTileSize)
+            tile_y = int(self.y // globals.scaledTileSize)
+            bottom_left_corner = int((self.y + globals.scaledTileSize) // globals.scaledTileSize)
+            if layers[currentMap[tile_y][tile_x]] == 1 or layers[currentMap[bottom_left_corner][tile_x]] == 1:
+                self.velx=0
+                self.x = (tile_x + 1) * globals.scaledTileSize + 0.1
+
+        if self.velx > 0:
+            tile_x = int((self.x + globals.scaledTileSize) // globals.scaledTileSize)
+            tile_y = int(self.y // globals.scaledTileSize)
+            bottom_right_corner = int((self.y + globals.scaledTileSize) // globals.scaledTileSize)
+            if layers[currentMap[tile_y][tile_x]] == 1 or layers[currentMap[bottom_right_corner][tile_x]] == 1:
+                self.velx=0
+                self.x = tile_x * globals.scaledTileSize - globals.scaledTileSize - 0.1
+
+        self.y += self.vely * dt
+
+        if self.vely < 0:
+            tile_x = int(self.x // globals.scaledTileSize)
+            tile_y = int(self.y // globals.scaledTileSize)
+            top_right_corner = int((self.x + globals.scaledTileSize) // globals.scaledTileSize)
+            if layers[currentMap[tile_y][tile_x]] == 1 or layers[currentMap[tile_y][top_right_corner]] == 1:
+                self.vely = 0
+                self.y = (tile_y + 1) * globals.scaledTileSize + 0.1
+
+        if self.vely > 0:
+            tile_x = int(self.x // globals.scaledTileSize)
+            tile_y = int((self.y + globals.scaledTileSize) // globals.scaledTileSize)
+            bottom_right_corner = int((self.x + globals.scaledTileSize) // globals.scaledTileSize)
+            if layers[currentMap[tile_y][tile_x]] == 1 or layers[currentMap[tile_y][bottom_right_corner]] == 1:
+                self.vely = 0
+                self.y = tile_y * globals.scaledTileSize - globals.scaledTileSize - 0.1
+            
 
 
-    def draw(self, surface, cameraPos):
-        screen_x = self.x - cameraPos[0]
-        screen_y = self.y - cameraPos[1]
+    def draw(self, surface):
+        screen_x = self.x
+        screen_y = self.y
 
         surface.blit(self.texture, (screen_x, screen_y))
         # for radius in range(95, 45, -1):  # Decreasing radius

@@ -1,6 +1,9 @@
 tile_size = 32
-scaling = 1.25
+scaling = 1.5
 lightMap = None
 debugMode = False
-lightGradientStep = 15
-lightRayCount = 75
+lightGradientStep = 5
+lightRayCount = 150
+lightMapDownscale = 2
+scaledTileSize = tile_size*scaling
+lightRayStepSize = 5

@@ -10,13 +10,16 @@ class World:
         
         self.tileNames = {
             ".": "floor",
+            "@": "floor",
             "#": "wall-s",
         }
 
         self.tileLayers = {
             ".": 0,
+            "@": 0,
             "#": 1
         }
+        self.spawnPoint = (0,0)
         self.tile_textures = self.load_tile_textures("assets/tiles")
         self.player = Player()
 
@@ -29,7 +32,7 @@ class World:
                 image = pygame.image.load(os.path.join(path, filename)).convert_alpha()
 
                 # Scale the texture based on globals.scaling
-                scaled_size = int(globals.tile_size * globals.scaling)
+                scaled_size = int(globals.scaledTileSize)
                 textures[tile_name] = pygame.transform.scale(image, (scaled_size, scaled_size))
 
         return textures
@@ -39,6 +42,10 @@ class World:
             mapdata = f.read().split("\n")
         
         isCompressed = mapdata[0][0] == "C"
+
+        self.spawnPoint = (int(mapdata[0].split()[1]),int(mapdata[0].split()[2]))
+        self.player.x = self.spawnPoint[0] * globals.scaledTileSize
+        self.player.y = self.spawnPoint[1] * globals.scaledTileSize
 
         if not isCompressed:
             self.currentMap = [list(row) for row in mapdata[1:]]
@@ -50,20 +57,19 @@ class World:
     def update(self, dt): 
         self.player.update(dt, self.currentMap, self.tileLayers)
 
-    def draw(self, surface, cameraPos):
+    def draw(self, surface):
         if not self.currentMap:
             return
-
-        cam_x, cam_y = cameraPos
-        scaled_size = int(globals.tile_size * globals.scaling)  # Adjusted tile size
+        
+        scaled_size = int(globals.scaledTileSize)  # Adjusted tile size
 
         for row_idx, row in enumerate(self.currentMap):
             for col_idx, tile in enumerate(row):
                 if self.tileLayers[tile] == 1:
                     continue
 
-                screen_x = (col_idx * scaled_size) - cam_x
-                screen_y = (row_idx * scaled_size) - cam_y
+                screen_x = (col_idx * scaled_size)
+                screen_y = (row_idx * scaled_size)
 
                 # Ensure only visible tiles are drawn
                 if (
@@ -76,7 +82,7 @@ class World:
                     else:
                         pygame.draw.rect(surface, (255, 0, 255), (screen_x, screen_y, scaled_size, scaled_size))  # Magenta for missing textures
 
-        self.player.draw(surface, cameraPos)
+        self.player.draw(surface)
 
 
     def handleEvent(self, event):
