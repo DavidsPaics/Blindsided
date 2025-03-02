@@ -1,17 +1,23 @@
 import pygame, logging, time, os
 from utilities import *
 import globals
+from player import Player
 
 tileNames = {
     ".": "floor",
-    "@": "floor", 
-    "#": "wall",
+    "#": "wall-s",
+}
+
+tileLayers = {
+    ".": 0,
+    "#": 1
 }
 
 class World:
     def __init__(self):
         self.currentMap = []
         self.tile_textures = self.load_tile_textures("assets/tiles")
+        self.player = Player()
 
     def load_tile_textures(self, path):
         """Loads tile textures from the given directory."""
@@ -39,6 +45,9 @@ class World:
 
         for line in mapdata[1:]:
             self.currentMap.append(list(rleDecode(line)))
+    
+    def update(self, dt): 
+        self.player.update(dt, self.currentMap, tileLayers)
 
     def draw(self, surface, cameraPos):
         if not self.currentMap:
@@ -62,3 +71,12 @@ class World:
                         surface.blit(texture, (screen_x, screen_y))
                     else:
                         pygame.draw.rect(surface, (255, 0, 255), (screen_x, screen_y, scaled_size, scaled_size))  # Magenta for missing textures
+
+        self.player.draw(surface, cameraPos)
+
+
+    def handleEvent(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_F7:
+                logging.info("Reloading tile textures.")
+                self.tile_textures = self.load_tile_textures("assets/tiles")

@@ -2,6 +2,7 @@ import pygame, logging, time, globals
 from world import World
 from player import Player
 from lightMap import LightMap
+from utilities import *
 pygame.init()
 
 # Set up the display
@@ -20,28 +21,34 @@ world = World()
 world.loadMap("./map.txt")
 cameraPos = (0,0)
 
-player = Player()
 globals.lightMap = LightMap((screen.get_width(), screen.get_height()))
 
 # Main game loop
 running = True
 clock = pygame.time.Clock()
 while running:
-    dt = clock.tick(60) # ms
+    dt = clock.tick() # ms
 
     globals.lightMap.clear()
 
     for event in pygame.event.get():
+        world.handleEvent(event)
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_F3:
+                globals.debugMode = not globals.debugMode
 
     screen.fill((0, 0, 0))
 
-    player.update(dt)
+    world.update(dt)
     world.draw(screen, cameraPos)
-    player.draw(screen, cameraPos)
 
     globals.lightMap.draw(screen)
+
+    if globals.debugMode:
+        drawFPSCounter(screen, clock)
+        screen.blit(renderText(f"Player velocity: {world.player.velx:.2f}, {world.player.vely:.2f}; x: {world.player.x:.2f}, {world.player.y:.2f}"), (0, 20))
 
     pygame.display.update()
 

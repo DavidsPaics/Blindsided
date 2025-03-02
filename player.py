@@ -12,7 +12,7 @@ class Player:
         self.texture = pygame.Surface((globals.scaling*globals.tile_size, globals.scaling*globals.tile_size))  # Fixed Surface creation
         self.texture.fill((255, 0, 0))  # Red player texture
 
-    def update(self, dt):
+    def update(self, dt, currentMap, layers):
         # Apply friction to slow down movement gradually
         self.velx *= 0.8
         self.vely *= 0.8
@@ -31,14 +31,41 @@ class Player:
         if pressedKeys[pygame.K_d] or pressedKeys[pygame.K_RIGHT]:  # Move Right
             self.velx = clamp(-self.terminalVelocity, self.velx + self.speed * dt, self.terminalVelocity)
 
+        if abs(self.velx) < 0.001:
+            self.velx = 0
+        if abs(self.vely) < 0.001:
+            self.vely = 0
+
+        #tile size and player size globals.tile_size*globals.scaling
+        # check if tile should collide layers[currentMap[tilex][tiley]] == 1
+
+        # Calculate the player's corner positions
+        corners = [
+            (self.velx + self.x, self.vely + self.y),
+            (self.velx + self.x + globals.tile_size * globals.scaling, self.vely + self.y),
+            (self.velx + self.x, self.vely + self.y + globals.tile_size * globals.scaling),
+            (self.velx + self.x + globals.tile_size * globals.scaling, self.vely + self.y + globals.tile_size * globals.scaling)
+        ]
+
+        # Check for collisions with the map boundaries and solid tiles
+        for corner in corners:
+            tile_x = int(corner[0] // (globals.tile_size * globals.scaling))
+            tile_y = int(corner[1] // (globals.tile_size * globals.scaling))
+
+            if tile_x < 0 or tile_x >= len(currentMap[0]) or tile_y < 0 or tile_y >= len(currentMap):
+                self.velx = 0
+                self.vely = 0
+                break
+
+            if layers[currentMap[tile_y][tile_x]] == 1:
+                self.velx = 0
+                self.vely = 0
+                break
+
         # Update position based on velocity
         self.x += self.velx * dt
         self.y += self.vely * dt
 
-        if self.velx < 0.001:
-            self.velx = 0
-        if self.vely < 0.001:
-            self.vely = 0
 
     def draw(self, surface, cameraPos):
         screen_x = self.x - cameraPos[0]
