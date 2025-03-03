@@ -68,21 +68,18 @@ class World:
                 if self.tileLayers[tile] == 1:
                     continue
 
-                screen_x = (col_idx * scaled_size)
-                screen_y = (row_idx * scaled_size)
-
+                screen_x = (col_idx * scaled_size) - globals.camerax
+                screen_y = (row_idx * scaled_size) - globals.cameray
                 # Ensure only visible tiles are drawn
                 if (
-                    0 <= screen_x < surface.get_width() and
-                    0 <= screen_y < surface.get_height()
+                    -globals.scaledTileSize <= screen_x < surface.get_width() and
+                    -globals.scaledTileSize <= screen_y < surface.get_height()
                 ):
                     texture = self.tile_textures.get(self.tileNames.get(tile, None), None)
                     if texture:
                         surface.blit(texture, (screen_x, screen_y))
                     else:
                         pygame.draw.rect(surface, (255, 0, 255), (screen_x, screen_y, scaled_size, scaled_size))  # Magenta for missing textures
-
-        self.player.draw(surface)
 
 
     def handleEvent(self, event):

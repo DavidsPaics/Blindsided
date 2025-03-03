@@ -7,8 +7,8 @@ pygame.init()
 
 # Set up the display
 screen = pygame.display.set_mode((0 , 0))
-globals.screenWidth = screen.get_width()
-globals.screenHeight = screen.get_height()
+globals.screen_width = screen.get_width()
+globals.screen_height = screen.get_height()
 pygame.display.set_caption("Blindsided")
 
 logging.basicConfig(level=logging.INFO, 
@@ -45,7 +45,6 @@ while running:
     world.update(dt)
     world.draw(screen)
 
-
     # Update and draw light
     if not globals.debugMode:
         globals.lightMap.draw(screen)
@@ -53,6 +52,9 @@ while running:
     if globals.debugMode:
         drawFPSCounter(screen, clock)
         screen.blit(renderText(f"Player velocity: {world.player.velx:.2f}, {world.player.vely:.2f}; x: {world.player.x:.2f}, {world.player.y:.2f}"), (0, 20))
+        screen.blit(renderText(f"Camera: {globals.camerax:.2f}, {globals.cameray:.2f}"), (0, 40))
+
+    world.player.draw(screen)
 
     pygame.display.update()
 

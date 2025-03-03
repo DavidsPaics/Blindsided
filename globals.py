@@ -7,3 +7,9 @@ lightRayCount = 150
 lightMapDownscale = 2
 scaledTileSize = tile_size*scaling
 lightRayStepSize = 5
+
+camerax = 0
+cameray = 0
+
+screen_height=0
+screen_width=0

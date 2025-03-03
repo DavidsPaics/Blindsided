@@ -40,14 +40,12 @@ class LightMap:
         light_pos = (light_pos[0] // self.downscale_factor, light_pos[1] // self.downscale_factor)
         scaled_radius = radius // self.downscale_factor
         if angle<360:
-            rays.append(light_pos)
+            rays.append((light_pos[0]+globals.camerax*0, light_pos[1]+globals.cameray*0))
 
         for angle in range(startAngle, angle+startAngle, max(1, angle // num_rays)):
             rad = math.radians(angle)
             dx, dy = math.cos(rad), math.sin(rad)
             x, y = light_pos
-
-            counter = 0
 
             for _ in range(scaled_radius // globals.lightRayStepSize):
                 x += dx * globals.lightRayStepSize
@@ -56,16 +54,20 @@ class LightMap:
                                  int(y // (globals.tile_size * globals.scaling // self.downscale_factor))
 
                 # Check if we are out of bounds
+                # Check if the ray is outside the screen bounds
+                screen_x = x * self.downscale_factor - globals.camerax
+                screen_y = y * self.downscale_factor - globals.cameray
+                if screen_x < 0 or screen_x >= self.full_size[0] or screen_y < 0 or screen_y >= self.full_size[1]:
+                    break  # Stop if the ray is outside the screen
+
                 if 0 <= tile_x < map_width and 0 <= tile_y < map_height:
                     tile_char = game_map[tile_y][tile_x]  # Get the tile character
                     if layers.get(tile_char, 0) == 1:  # Look up in layers; default to '0'
-                        counter -= 1
-                        if counter < 1:
-                            break  # Stop light at this wall
+                        break  # Stop light at this wall
                 else:
                     break  # Stop if out of bounds
 
-            rays.append((x, y))
+            rays.append((x+globals.camerax*0, y+globals.cameray*0))
         return rays
 
     def draw_light(self, light_pos, game_map, layers, radius=200, light_strength=100, angle=360, startAngle=0):
@@ -78,7 +80,9 @@ class LightMap:
         """
         self.temp_surface.fill((0,0,0))
         light_points = self.cast_light(light_pos, game_map, layers, radius, num_rays=globals.lightRayCount, angle=angle, startAngle=startAngle)
-
+        screen_light_pos = (light_pos[0]-globals.camerax, light_pos[1]-globals.cameray)
+        for i in range(len(light_points)):
+            light_points[i] = (light_points[i][0]-globals.camerax/2, light_points[i][1]-globals.cameray/2)
         if len(light_points) > 2:
             # Draw the base light shape in low resolution
             pygame.draw.polygon(self.temp_surface, (0, 0, 0, light_strength), light_points)
@@ -92,8 +96,8 @@ class LightMap:
                 pygame.draw.circle(gradient, (0, 0, 0, alpha), (scaled_radius, scaled_radius), i)
 
             # Center the gradient at the light source
-            gradient_x = light_pos[0] // self.downscale_factor - scaled_radius
-            gradient_y = light_pos[1] // self.downscale_factor - scaled_radius
+            gradient_x = screen_light_pos[0] // self.downscale_factor - scaled_radius
+            gradient_y = screen_light_pos[1] // self.downscale_factor - scaled_radius
 
             self.temp_surface.blit(gradient, (gradient_x, gradient_y))
             self.surface.blit(self.temp_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)

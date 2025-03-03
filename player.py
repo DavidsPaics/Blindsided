@@ -42,6 +42,8 @@ class Player:
         centerPos = (self.x + (globals.scaledTileSize)/2, self.y + (globals.scaledTileSize)/2)
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
+        mouse_x += globals.camerax
+        mouse_y += globals.cameray
         angle = round(math.degrees(math.atan2(mouse_y - centerPos[1], mouse_x - centerPos[0])) - 37.5)
         globals.lightMap.draw_light(centerPos, currentMap, layers, radius=500, light_strength=0, angle=75, startAngle=angle)
         globals.lightMap.draw_light(centerPos, currentMap, layers, radius=200, light_strength=40)
@@ -86,12 +88,14 @@ class Player:
             if layers[currentMap[tile_y][tile_x]] == 1 or layers[currentMap[tile_y][bottom_right_corner]] == 1:
                 self.vely = 0
                 self.y = tile_y * globals.scaledTileSize - globals.scaledTileSize - 0.1
-            
+        
+        globals.camerax = self.x - globals.screen_width / 2 + globals.scaledTileSize / 2
+        globals.cameray = self.y - globals.screen_height / 2 + globals.scaledTileSize / 2
 
 
     def draw(self, surface):
-        screen_x = self.x
-        screen_y = self.y
+        screen_x = self.x - globals.camerax
+        screen_y = self.y - globals.cameray
 
         surface.blit(self.texture, (screen_x, screen_y))
         # for radius in range(95, 45, -1):  # Decreasing radius
