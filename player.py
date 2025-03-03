@@ -41,12 +41,15 @@ class Player:
 
         centerPos = (self.x + (globals.scaledTileSize)/2, self.y + (globals.scaledTileSize)/2)
 
-        globals.lightMap.draw_light(centerPos, currentMap, layers, radius=500, light_strength=40)
-
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        light_x = mouse_x 
-        light_y = mouse_y 
-        globals.lightMap.draw_light((light_x, light_y), currentMap, layers, radius=200, light_strength=40)
+        angle = round(math.degrees(math.atan2(mouse_y - centerPos[1], mouse_x - centerPos[0])) - 37.5)
+        globals.lightMap.draw_light(centerPos, currentMap, layers, radius=500, light_strength=0, angle=75, startAngle=angle)
+        globals.lightMap.draw_light(centerPos, currentMap, layers, radius=200, light_strength=40)
+
+        # mouse_x, mouse_y = pygame.mouse.get_pos()
+        # light_x = mouse_x 
+        # light_y = mouse_y 
+        # globals.lightMap.draw_light((light_x, light_y), currentMap, layers, radius=200, light_strength=40)
 
         self.x += self.velx * dt
 

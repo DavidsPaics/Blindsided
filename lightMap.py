@@ -22,7 +22,7 @@ class LightMap:
         """ Clears the light map with a semi-transparent dark overlay. """
         self.surface.fill((0, 0, 0, 255))
 
-    def cast_light(self, light_pos, game_map, layers, radius=200, num_rays=100):
+    def cast_light(self, light_pos, game_map, layers, radius=200, num_rays=100, angle=360, startAngle=0):
         """
         Casts light rays dynamically and stops at walls.
         :param light_pos: (x, y) position of the light source
@@ -39,8 +39,10 @@ class LightMap:
         # Adjust light position for low resolution
         light_pos = (light_pos[0] // self.downscale_factor, light_pos[1] // self.downscale_factor)
         scaled_radius = radius // self.downscale_factor
+        if angle<360:
+            rays.append(light_pos)
 
-        for angle in range(0, 360, 360 // num_rays):
+        for angle in range(startAngle, angle+startAngle, max(1, angle // num_rays)):
             rad = math.radians(angle)
             dx, dy = math.cos(rad), math.sin(rad)
             x, y = light_pos
@@ -66,7 +68,7 @@ class LightMap:
             rays.append((x, y))
         return rays
 
-    def draw_light(self, light_pos, game_map, layers, radius=200, light_strength=100):
+    def draw_light(self, light_pos, game_map, layers, radius=200, light_strength=100, angle=360, startAngle=0):
         """
         Draws the light effect onto the low-resolution surface.
         :param light_pos: (x, y) position of the light source
@@ -75,7 +77,7 @@ class LightMap:
         :param radius: Maximum light distance
         """
         self.temp_surface.fill((0,0,0))
-        light_points = self.cast_light(light_pos, game_map, layers, radius, num_rays=globals.lightRayCount)
+        light_points = self.cast_light(light_pos, game_map, layers, radius, num_rays=globals.lightRayCount, angle=angle, startAngle=startAngle)
 
         if len(light_points) > 2:
             # Draw the base light shape in low resolution
